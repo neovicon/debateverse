@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-blue: #00f3ff;
+  --color-neon-pink: #ff00ff;
+  --color-dark-bg: #0b0c10;
+  --color-panel-bg: rgba(31, 40, 51, 0.6);
+  --color-text-primary: #c5c6c7;
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+  
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-dark-bg)] text-[var(--color-text-primary)] font-sans antialiased min-h-screen;
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(0, 243, 255, 0.05), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(255, 0, 255, 0.05), transparent 25%);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-[var(--color-panel-bg)] backdrop-blur-md border border-white/10 rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)];
+  }
+  
+  .neon-text-blue {
+    @apply text-[var(--color-neon-blue)] drop-shadow-[0_0_8px_rgba(0,243,255,0.8)];
+  }
+  
+  .neon-text-pink {
+    @apply text-[var(--color-neon-pink)] drop-shadow-[0_0_8px_rgba(255,0,255,0.8)];
+  }
+
+  .btn-neon,
+  .btn-neon-blue,
+  .btn-neon-pink {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 border;
+  }
+  
+  .btn-neon-blue {
+    @apply border-[var(--color-neon-blue)] text-[var(--color-neon-blue)] hover:bg-[var(--color-neon-blue)] hover:text-black hover:shadow-[0_0_15px_var(--color-neon-blue)];
+  }
+
+  .btn-neon-pink {
+    @apply border-[var(--color-neon-pink)] text-[var(--color-neon-pink)] hover:bg-[var(--color-neon-pink)] hover:text-black hover:shadow-[0_0_15px_var(--color-neon-pink)];
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff;
+  }
+  to {
+    box-shadow: 0 0 20px #00f3ff, 0 0 30px #00f3ff;
+  }
+}
