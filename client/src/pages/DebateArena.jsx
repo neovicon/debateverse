@@ -31,7 +31,7 @@ const DebateArena = () => {
     const fetchDebate = async () => {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data } = await axios.get(`http://localhost:5000/api/debates/${id}`, config);
+        const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/debates/${id}`, config);
         setDebate(data);
         if (data.messages && data.messages.length > 0) {
           const formattedMessages = data.messages.map(m => ({
@@ -60,7 +60,7 @@ const DebateArena = () => {
     if (!debate) return;
 
     // Connect to specific namespace
-    const newSocket = io('http://localhost:5000/debates');
+    const newSocket = io(`${import.meta.env.VITE_BACKEND_URL}/debates`);
     setSocket(newSocket);
 
     // Join room

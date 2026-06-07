@@ -6,7 +6,7 @@ import debateRoutes from './routes/debateRoutes.js';
 
 const app = express();
 
-app.use(cors({ origin: '*' })); // Allow all origins for dev
+app.use(cors({ origin: process.env.FRONTEND_URL })); // Allow specific frontend origin
 app.use(express.json());
 
 app.get('/api/health', (req, res) => {

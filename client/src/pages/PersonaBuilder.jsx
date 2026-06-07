@@ -43,7 +43,7 @@ const PersonaBuilder = () => {
         const fetchPersona = async () => {
           try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.get(`http://localhost:5000/api/personas/${id}`, config);
+            const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/personas/${id}`, config);
             populateForm(data);
           } catch (error) {
             console.error('Failed to fetch persona:', error);

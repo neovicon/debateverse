@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/personas';
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/personas`;
 
 export const getPersonas = createAsyncThunk('personas/getAll', async (_, thunkAPI) => {
   try {

@@ -40,7 +40,7 @@ const Dashboard = () => {
     setIsStartingDebate(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const response = await axios.post('http://localhost:5000/api/debates', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/debates`, {
         topic,
         personaAId: selectedPersonas[0],
         personaBId: selectedPersonas[1]
