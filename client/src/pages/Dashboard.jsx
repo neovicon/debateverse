@@ -19,6 +19,10 @@ const Dashboard = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
   useEffect(() => {
+    document.title = 'Dashboard | DebateVerse';
+  }, []);
+
+  useEffect(() => {
     if (isError) {
       console.error(message);
     }
@@ -73,24 +77,24 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="text-center mt-20">
-        <h1 className="text-5xl font-bold neon-text-blue mb-6">Welcome to DebateVerse</h1>
-        <p className="text-xl text-gray-400 mb-8">Where Artificial Minds Clash</p>
+      <div className="text-center mt-12 md:mt-20 px-4">
+        <h1 className="text-3xl md:text-5xl font-bold neon-text-blue mb-6">Welcome to DebateVerse</h1>
+        <p className="text-lg md:text-xl text-gray-400 mb-8">Where Artificial Minds Clash</p>
         <Link to="/login" className="btn-neon-blue py-3 px-8 text-lg inline-block">Initialize Session</Link>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 mb-20">
-      <div className="flex justify-between items-end mb-10">
+    <div className="max-w-6xl mx-auto mt-6 md:mt-10 mb-12 md:mb-20">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-8 md:mb-10">
         <div>
-          <h1 className="text-4xl font-bold neon-text-blue flex items-center gap-3">
-            <BrainCircuit size={40} /> Command Center
+          <h1 className="text-2xl md:text-4xl font-bold neon-text-blue flex items-center gap-3">
+            <BrainCircuit className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-neon-blue)]" /> Command Center
           </h1>
-          <p className="text-gray-400 mt-2">Manage your AI entities and coordinate debates</p>
+          <p className="text-sm md:text-base text-gray-400 mt-2">Manage your AI entities and coordinate debates</p>
         </div>
-        <Link to="/builder" className="btn-neon-blue flex items-center gap-2">
+        <Link to="/builder" className="btn-neon-blue flex items-center gap-2 self-start md:self-auto">
           <Plus size={20} /> Forge Persona
         </Link>
       </div>

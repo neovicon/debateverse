@@ -24,6 +24,10 @@ const DebateArena = () => {
 
   const isOwner = user && debate && user._id === debate.owner;
 
+  useEffect(() => {
+    document.title = 'Arena | DebateVerse';
+  }, []);
+
   // Fetch debate details
   useEffect(() => {
     const fetchDebate = async () => {
@@ -31,6 +35,9 @@ const DebateArena = () => {
         const config = user ? { headers: { Authorization: `Bearer ${user.token}` } } : {};
         const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/debates/${id}`, config);
         setDebate(data);
+        if (data.topic) {
+          document.title = `${data.topic} | DebateVerse`;
+        }
         if (data.messages && data.messages.length > 0) {
           const formattedMessages = data.messages.map(m => ({
             senderId: m.senderId,
@@ -130,29 +137,29 @@ const DebateArena = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto h-[80vh] flex flex-col mt-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold neon-text-pink flex items-center gap-2">
-          <Activity size={32} /> Arena: {debate.topic}
+    <div className="max-w-6xl mx-auto h-[calc(100vh-160px)] md:h-[80vh] flex flex-col mt-2 md:mt-4">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+        <h1 className="text-xl md:text-3xl font-bold neon-text-pink flex items-center gap-2 break-words max-w-full">
+          <Activity className="flex-shrink-0" size={28} /> <span>Arena: {debate.topic}</span>
         </h1>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
           {isOwner ? (
             <button 
               onClick={triggerNextTurn}
-              className="btn-neon-blue flex items-center gap-2"
+              className="btn-neon-blue flex items-center gap-2 text-sm md:text-base py-2 px-3 md:px-4"
               disabled={!!currentStream}
             >
               <Cpu size={18} /> Initiate Next Turn
             </button>
           ) : (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 text-gray-400 text-sm font-medium">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-gray-400 text-xs md:text-sm font-medium">
               <Lock size={14} className="text-red-500 animate-pulse" />
               <span>Read-Only View</span>
             </div>
           )}
           <button 
             onClick={handleShare}
-            className="btn-neon-pink flex items-center gap-2"
+            className="btn-neon-pink flex items-center gap-2 text-sm md:text-base py-2 px-3 md:px-4"
           >
             {copied ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
             <span>{copied ? 'Link Copied!' : 'Share Debate'}</span>

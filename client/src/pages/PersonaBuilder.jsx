@@ -52,6 +52,10 @@ const PersonaBuilder = () => {
   };
 
   useEffect(() => {
+    document.title = isEditMode ? 'Modify Persona | DebateVerse' : 'Persona Forge | DebateVerse';
+  }, [isEditMode]);
+
+  useEffect(() => {
     if (isEditMode) {
       // Find persona from state or fetch it
       const existingPersona = personas.find(p => p._id === id);
@@ -120,10 +124,10 @@ const PersonaBuilder = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 mb-20">
-      <div className="flex items-center gap-4 mb-8">
-        <Brain className="text-[var(--color-neon-blue)]" size={48} />
-        <h1 className="text-4xl font-bold neon-text-blue">{isEditMode ? 'Modify Persona' : 'Persona Forge'}</h1>
+    <div className="max-w-4xl mx-auto mt-6 md:mt-10 mb-12 md:mb-20 px-4 md:px-0">
+      <div className="flex items-center gap-4 mb-6 md:mb-8">
+        <Brain className="text-[var(--color-neon-blue)] w-10 h-10 md:w-12 md:h-12 flex-shrink-0" />
+        <h1 className="text-2xl md:text-4xl font-bold neon-text-blue">{isEditMode ? 'Modify Persona' : 'Persona Forge'}</h1>
       </div>
 
       <motion.form 
