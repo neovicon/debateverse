@@ -34,3 +34,14 @@ export const getDebateById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getUserDebates = async (req, res) => {
+  try {
+    const debates = await Debate.find({ owner: req.user._id })
+      .populate('participants')
+      .sort({ createdAt: -1 });
+    res.status(200).json(debates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

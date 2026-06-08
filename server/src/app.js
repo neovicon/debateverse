@@ -29,7 +29,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // In production, serve static files from the Vite build output
 if (isProduction) {
-  const clientPath = path.resolve(__dirname, '../../../client/dist');
+  const clientPath = path.resolve(__dirname, '../../client/dist');
   app.use(express.static(clientPath));
   
   // Fallback route: serve index.html for all non-API routes

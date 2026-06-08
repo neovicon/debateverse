@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { getPersonas } from '../store/personaSlice';
 import { motion } from 'framer-motion';
-import { BrainCircuit, Plus, Zap, Users, ShieldAlert, Edit2 } from 'lucide-react';
+import { BrainCircuit, Plus, Zap, Users, ShieldAlert, Edit2, History } from 'lucide-react';
 import axios from 'axios';
 
 const Dashboard = () => {
@@ -15,6 +15,8 @@ const Dashboard = () => {
   const [selectedPersonas, setSelectedPersonas] = useState([]);
   const [topic, setTopic] = useState('');
   const [isStartingDebate, setIsStartingDebate] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
   useEffect(() => {
     if (isError) {
@@ -24,6 +26,22 @@ const Dashboard = () => {
       dispatch(getPersonas());
     }
   }, [user, isError, message, dispatch]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/debates`, config);
+        setHistory(response.data);
+      } catch (error) {
+        console.error('Error fetching debate history:', error);
+      } finally {
+        setIsHistoryLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [user]);
 
   const togglePersonaSelection = (id) => {
     if (selectedPersonas.includes(id)) {
@@ -198,6 +216,68 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Recent Debates History */}
+      <div className="mt-16">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <History className="text-[var(--color-neon-blue)]" /> Debate History
+        </h2>
+        {isHistoryLoading ? (
+          <p className="text-gray-400">Loading history...</p>
+        ) : history.length === 0 ? (
+          <div className="glass-panel p-8 text-center flex flex-col items-center justify-center border-dashed border-2 border-gray-600">
+            <p className="text-gray-400">No past debates found. Forge some personas and launch a debate above!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {history.map(deb => (
+              <motion.div
+                key={deb._id}
+                whileHover={{ scale: 1.02 }}
+                className="glass-panel p-5 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                      deb.status === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                      deb.status === 'active' ? 'bg-[var(--color-neon-blue)]/20 text-[var(--color-neon-blue)] border border-[var(--color-neon-blue)]/30 animate-pulse' :
+                      'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                    }`}>
+                      {deb.status}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(deb.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-4 line-clamp-2 h-14" title={deb.topic}>
+                    {deb.topic}
+                  </h3>
+                  <div className="flex items-center gap-4 mb-4">
+                    {deb.participants && deb.participants.map((p, pIdx) => (
+                      <div key={p ? p._id : pIdx} className="flex items-center gap-2">
+                        <img
+                          src={p ? (p.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${p.name}`) : `https://api.dicebear.com/7.x/bottts/svg?seed=deleted`}
+                          alt={p ? p.name : 'Unknown'}
+                          className={`w-8 h-8 rounded-full border ${pIdx === 0 ? 'border-[var(--color-neon-blue)]' : 'border-[var(--color-neon-pink)]'} bg-white/5`}
+                        />
+                        <span className="text-xs font-semibold text-gray-300 truncate max-w-[80px]" title={p ? p.name : 'Unknown'}>
+                          {p ? p.name : 'Unknown'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate(`/debate/${deb._id}`)}
+                  className="w-full btn-neon-blue py-2 text-sm flex items-center justify-center gap-2"
+                >
+                  Enter Arena
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
