@@ -5,6 +5,6 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.route('/').post(protect, createDebate).get(protect, getUserDebates);
-router.route('/:id').get(protect, getDebateById);
+router.route('/:id').get(getDebateById);
 
 export default router;

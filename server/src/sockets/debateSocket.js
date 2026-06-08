@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import Debate from '../models/Debate.js';
 import Persona from '../models/Persona.js';
 import { generateDebateResponseStream } from '../services/aiService.js';
@@ -16,9 +17,28 @@ export default function setupDebateSocket(io) {
 
     // Handle starting a debate turn
     socket.on('start_turn', async (data) => {
-      const { debateId, activePersonaId, contextHistory, isFirstTurn } = data;
+      const { debateId, activePersonaId, contextHistory, isFirstTurn, token } = data;
       
       try {
+        const debate = await Debate.findById(debateId);
+        if (!debate) throw new Error('Debate not found');
+
+        // Check if token is present and valid, and matches debate owner
+        if (!token) {
+          throw new Error('Not authorized to start turn: No token provided');
+        }
+
+        let decoded;
+        try {
+          decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+          throw new Error('Not authorized to start turn: Invalid token');
+        }
+
+        if (debate.owner.toString() !== decoded.id) {
+          throw new Error('Not authorized to start turn: Only the debate owner can initiate turns');
+        }
+
         const persona = await Persona.findById(activePersonaId);
         if (!persona) throw new Error('Persona not found');
 

@@ -32,29 +32,6 @@ const PersonaBuilder = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
 
-  useEffect(() => {
-    if (isEditMode) {
-      // Find persona from state or fetch it
-      const existingPersona = personas.find(p => p._id === id);
-      if (existingPersona) {
-        populateForm(existingPersona);
-      } else {
-        // Fetch if not in state
-        const fetchPersona = async () => {
-          try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/personas/${id}`, config);
-            populateForm(data);
-          } catch (error) {
-            console.error('Failed to fetch persona:', error);
-            navigate('/');
-          }
-        };
-        fetchPersona();
-      }
-    }
-  }, [id, isEditMode, personas, user, navigate]);
-
   const populateForm = (persona) => {
     setFormData({
       name: persona.name || '',
@@ -73,6 +50,29 @@ const PersonaBuilder = () => {
       setAvatarPreview(persona.avatar);
     }
   };
+
+  useEffect(() => {
+    if (isEditMode) {
+      // Find persona from state or fetch it
+      const existingPersona = personas.find(p => p._id === id);
+      if (existingPersona) {
+        setTimeout(() => populateForm(existingPersona), 0);
+      } else {
+        // Fetch if not in state
+        const fetchPersona = async () => {
+          try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/personas/${id}`, config);
+            populateForm(data);
+          } catch (error) {
+            console.error('Failed to fetch persona:', error);
+            navigate('/');
+          }
+        };
+        fetchPersona();
+      }
+    }
+  }, [id, isEditMode, personas, user, navigate]);
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

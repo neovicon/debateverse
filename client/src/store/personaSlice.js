@@ -52,7 +52,7 @@ export const personaSlice = createSlice({
   name: 'persona',
   initialState,
   reducers: {
-    reset: (state) => initialState,
+    reset: () => initialState,
   },
   extraReducers: (builder) => {
     builder

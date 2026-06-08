@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import { motion } from 'framer-motion';
-import { Mic, Activity, ShieldAlert, Cpu } from 'lucide-react';
+import { Mic, Activity, ShieldAlert, Cpu, Share2, Check, Lock, LogIn } from 'lucide-react';
 import axios from 'axios';
 
 const DebateArena = () => {
@@ -11,26 +11,24 @@ const DebateArena = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   
-  const [socket, setSocket] = useState(null);
+  const socketRef = useRef(null);
   const [debate, setDebate] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentStream, setCurrentStream] = useState('');
   const [activePersona, setActivePersona] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
   
   const messagesEndRef = useRef(null);
 
+  const isOwner = user && debate && user._id === debate.owner;
+
   // Fetch debate details
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
     const fetchDebate = async () => {
       try {
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const config = user ? { headers: { Authorization: `Bearer ${user.token}` } } : {};
         const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/debates/${id}`, config);
         setDebate(data);
         if (data.messages && data.messages.length > 0) {
@@ -54,14 +52,14 @@ const DebateArena = () => {
     };
 
     fetchDebate();
-  }, [id, user, navigate]);
+  }, [id, user]);
 
   useEffect(() => {
     if (!debate) return;
 
     // Connect to specific namespace
     const newSocket = io(`${import.meta.env.VITE_BACKEND_URL}/debates`);
-    setSocket(newSocket);
+    socketRef.current = newSocket;
 
     // Join room
     newSocket.emit('join_debate', debate._id);
@@ -108,17 +106,26 @@ const DebateArena = () => {
   const personaA = debate.participants[0];
   const personaB = debate.participants[1];
 
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const triggerNextTurn = () => {
+    if (!isOwner) return;
+
     const nextPersonaId = activePersona === personaA._id ? personaB._id : personaA._id;
     
     // Convert previous messages to string context for AI
     const contextHistory = messages.map(m => `${m.senderId === personaA._id ? personaA.name : personaB.name}: ${m.text}`).join('\n');
 
-    socket.emit('start_turn', {
+    socketRef.current?.emit('start_turn', {
       debateId: debate._id,
       activePersonaId: nextPersonaId,
       contextHistory: `Topic: ${debate.topic} \n\n${contextHistory}`,
-      isFirstTurn: messages.length === 0
+      isFirstTurn: messages.length === 0,
+      token: user?.token
     });
   };
 
@@ -128,16 +135,50 @@ const DebateArena = () => {
         <h1 className="text-3xl font-bold neon-text-pink flex items-center gap-2">
           <Activity size={32} /> Arena: {debate.topic}
         </h1>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          {isOwner ? (
+            <button 
+              onClick={triggerNextTurn}
+              className="btn-neon-blue flex items-center gap-2"
+              disabled={!!currentStream}
+            >
+              <Cpu size={18} /> Initiate Next Turn
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 text-gray-400 text-sm font-medium">
+              <Lock size={14} className="text-red-500 animate-pulse" />
+              <span>Read-Only View</span>
+            </div>
+          )}
           <button 
-            onClick={triggerNextTurn}
-            className="btn-neon-blue flex items-center gap-2"
-            disabled={!!currentStream}
+            onClick={handleShare}
+            className="btn-neon-pink flex items-center gap-2"
           >
-            <Cpu size={18} /> Initiate Next Turn
+            {copied ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
+            <span>{copied ? 'Link Copied!' : 'Share Debate'}</span>
           </button>
         </div>
       </div>
+
+      {!user && (
+        <div className="glass-panel p-4 mb-6 border border-[var(--color-neon-blue)]/30 bg-[var(--color-neon-blue)]/5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Cpu className="text-[var(--color-neon-blue)] animate-pulse" size={24} />
+            <div>
+              <h3 className="font-bold text-white text-base">Spectator Mode</h3>
+              <p className="text-sm text-gray-400">You are viewing this debate as a guest. Sign up to forge your own personas and run debates!</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Link to="/login" className="text-gray-300 hover:text-white px-4 py-2 rounded-lg border border-gray-700 hover:border-white transition-colors text-sm font-medium flex items-center gap-2">
+              <LogIn size={14} /> Login
+            </Link>
+            <Link to="/register" className="btn-neon-blue text-sm">
+              Register
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-center h-full pb-8">
         {/* Chat / Stream Area */}
@@ -162,16 +203,16 @@ const DebateArena = () => {
               >
                 <div className={`flex gap-3 max-w-[85%] ${isA ? 'flex-row' : 'flex-row-reverse'}`}>
                   <div 
-                    className="flex-shrink-0 cursor-pointer mt-1" 
-                    onClick={() => navigate(`/builder/${persona._id}`)}
-                    title={`View ${persona.name}'s profile`}
+                    className={`flex-shrink-0 mt-1 ${user ? 'cursor-pointer' : ''}`}
+                    onClick={() => user && navigate(`/builder/${persona._id}`)}
+                    title={user ? `View ${persona.name}'s profile` : ''}
                   >
-                    <img src={persona.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${persona.name}`} alt={persona.name} className={`w-10 h-10 rounded-full border-2 ${isA ? 'border-[var(--color-neon-blue)]' : 'border-[var(--color-neon-pink)]'} bg-black/40 hover:scale-110 transition-transform object-cover`} />
+                    <img src={persona.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${persona.name}`} alt={persona.name} className={`w-10 h-10 rounded-full border-2 ${isA ? 'border-[var(--color-neon-blue)]' : 'border-[var(--color-neon-pink)]'} bg-black/40 ${user ? 'hover:scale-110' : ''} transition-transform object-cover`} />
                   </div>
                   <div className={`rounded-xl p-4 ${isA ? 'bg-[var(--color-neon-blue)]/10 border border-[var(--color-neon-blue)]/30' : 'bg-[var(--color-neon-pink)]/10 border border-[var(--color-neon-pink)]/30'} shadow-lg backdrop-blur-sm`}>
                     <p 
-                      className={`text-sm font-bold mb-1 cursor-pointer transition-colors ${isA ? 'text-[var(--color-neon-blue)] hover:text-white' : 'text-[var(--color-neon-pink)] hover:text-white'} text-${isA ? 'left' : 'right'}`}
-                      onClick={() => navigate(`/builder/${persona._id}`)}
+                      className={`text-sm font-bold mb-1 transition-colors ${isA ? 'text-[var(--color-neon-blue)]' : 'text-[var(--color-neon-pink)]'} ${user ? 'cursor-pointer hover:text-white' : ''} text-${isA ? 'left' : 'right'}`}
+                      onClick={() => user && navigate(`/builder/${persona._id}`)}
                     >
                       {persona.name}
                     </p>
@@ -194,15 +235,15 @@ const DebateArena = () => {
                >
                  <div className={`flex gap-3 max-w-[85%] ${isA ? 'flex-row' : 'flex-row-reverse'}`}>
                    <div 
-                     className="flex-shrink-0 cursor-pointer mt-1" 
-                     onClick={() => navigate(`/builder/${persona._id}`)}
+                     className={`flex-shrink-0 mt-1 ${user ? 'cursor-pointer' : ''}`}
+                     onClick={() => user && navigate(`/builder/${persona._id}`)}
                    >
                      <img src={persona.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${persona.name}`} alt={persona.name} className={`w-10 h-10 rounded-full border-2 ${isA ? 'border-[var(--color-neon-blue)]' : 'border-[var(--color-neon-pink)]'} bg-black/40 object-cover animate-pulse`} />
                    </div>
                    <div className={`rounded-xl p-4 border ${isA ? 'bg-[var(--color-neon-blue)]/20 border-[var(--color-neon-blue)]/60' : 'bg-[var(--color-neon-pink)]/20 border-[var(--color-neon-pink)]/60'} shadow-[0_0_15px_rgba(0,0,0,0.3)] backdrop-blur-md`}>
                      <p 
-                       className={`text-sm font-bold mb-2 flex items-center gap-2 cursor-pointer transition-colors ${isA ? 'text-[var(--color-neon-blue)] hover:text-white' : 'text-[var(--color-neon-pink)] hover:text-white'} justify-${isA ? 'start' : 'end'}`}
-                       onClick={() => navigate(`/builder/${persona._id}`)}
+                       className={`text-sm font-bold mb-2 flex items-center gap-2 transition-colors ${isA ? 'text-[var(--color-neon-blue)]' : 'text-[var(--color-neon-pink)]'} ${user ? 'cursor-pointer hover:text-white' : ''} justify-${isA ? 'start' : 'end'}`}
+                       onClick={() => user && navigate(`/builder/${persona._id}`)}
                      >
                        <Mic size={14} className="animate-pulse" />
                        {persona.name} is speaking...
